@@ -1,0 +1,33 @@
+syntax = "proto3";
+package ServiceRegistrationDiscovery;
+option go_package="./ServiceRegistrationDiscovery;ServiceRegistrationDiscovery";
+
+enum ResponseCode {
+    SUCCUSS = 0;
+    FAIL = 1;
+}
+
+message Operation{
+    int32 firstNumber = 1;
+    int32 secondNumber = 2;
+    int32 serviceNumber = 3;
+}
+
+message ServiceRequest{
+    repeated Operation operation = 1;
+}
+
+message ServiceReply{
+    int32 code =1;
+    string msg = 2;
+    repeated int32 result = 3;
+}
+
+service Greeter {
+    // Sends a greeting
+    rpc ServiceMethod (ServiceRequest) returns (ServiceReply) {}
+}
+
+/*
+    protoc --go_out=. --go-grpc_out=.  ServiceRegistrationDiscovery.proto
+*/
