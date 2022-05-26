@@ -14,6 +14,9 @@ import (
 
 var (
 	port = flag.Int("port", 10001, "The server port")
+	ip   = flag.String("ip", "106.53.97.81", "The server ip")
+	// srvName example /etcd-servicename-serviceid
+	srvName = flag.String("id", "/etcd-add-service-1", "The server name")
 )
 
 type server struct {
@@ -35,7 +38,7 @@ func main() {
 	// 启动服务并且监听地址
 	flag.Parse()
 	// ------ 开始将服务信息注册到etcd
-	log.Printf("server 注册开始  ")
+	fmt.Println("server 注册开始  ")
 	srvRegister, err := register.NewEtcdRegister()
 	if err != nil {
 		log.Println(err)
@@ -43,16 +46,18 @@ func main() {
 	}
 	// 程序退出自动关闭注册器链接
 	defer srvRegister.Close()
-	// 服务id
-	srvName := "10001"
-	// 服务监听地址
-	srvAddr := "106.53.97.81:10001"
-	srvRegister.RegisterServer(srvName, srvAddr, 60)
+	// 拼接网络端口地址
+	srvAddr := *ip + fmt.Sprintf(":%d", *port)
+
+	err = srvRegister.RegisterServer(*srvName, srvAddr, 60)
 	if err != nil {
 		log.Printf("register error %v \n", err)
 		return
 	}
-	log.Printf("server 注册结束  ")
+	fmt.Println("server 注册成功  ")
+	fmt.Printf("service name:%s,service ip-port:%s\n", *srvName, srvAddr)
+	// ------ 将服务信息注册到etcd结束
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

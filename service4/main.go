@@ -13,9 +13,10 @@ import (
 )
 
 var (
-	port    = flag.Int("port", 10004, "The server port")
-	ip      = flag.String("ip", "106.53.97.81", "The server ip")
-	srvName = flag.String("id", "10004", "The server id")
+	port = flag.Int("port", 10004, "The server port")
+	ip   = flag.String("ip", "106.53.97.81", "The server ip")
+	// srvName example /etcd-servicename-serviceid
+	srvName = flag.String("name", "/etcd-sub-service-2", "The server name")
 )
 
 type server struct {
@@ -26,7 +27,7 @@ func (s *server) ServiceMethod(ctx context.Context, in *pb.ServiceRequest) (*pb.
 
 	var result pb.ServiceReply
 	for _, x := range in.GetOperation() {
-		result.Result = append(result.Result, x.GetFirstNumber()-x.GetSecondNumber())
+		result.Result = append(result.Result, 2*(x.GetFirstNumber()-x.GetSecondNumber()))
 	}
 	result.Msg = ""
 	result.Code = 0
@@ -48,13 +49,14 @@ func main() {
 	// 服务监听地址
 	srvAddr := *ip + fmt.Sprintf(":%d", *port)
 	//fmt.Printf(srvAddr)
-	fmt.Printf("service id:%s,service ip-port:%s\n", fmt.Sprintf(":%d", *port), srvAddr)
+
 	srvRegister.RegisterServer(*srvName, srvAddr, 60)
 	if err != nil {
 		log.Printf("register error %v \n", err)
 		return
 	}
-	log.Printf("server 注册结束  ")
+	log.Printf("server 注册成功  ")
+	fmt.Printf("service name:%s,service ip-port:%s\n", *srvName, srvAddr)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
