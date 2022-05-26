@@ -4,39 +4,47 @@ import (
 	pb "ServiceRegistrationDiscovery/ServiceRegistrationDiscovery"
 	"ServiceRegistrationDiscovery/discovery"
 	"context"
-	"flag"
 	"log"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/resolver"
 )
 
-var srvId = []string{"10003", "10004"}
+// var srvId = []string{"10003", "10004"}
 
 // addr  = flag.String("addr", "106.53.97.81:10001", "the address to connect to")
-//srvId = flag.String("srvId", "10001", "get srvinfo from etcd")
+// srvId = flag.String("srvId", "10001", "get srvinfo from etcd")
 
 func main() {
-	//log.Printf("nihao")
-	flag.Parse()
-	log.Printf("开始服务发现：")
-	// 开始发现服务
-	disc, err := discovery.NewEtcdDiscovery()
-	if err != nil {
-		log.Fatalf("did not connect etcd: %v", err)
-	}
-	srvaddr, err := disc.GetAddrFromServiceId(srvId)
-	if err != nil {
-		log.Fatalf("Service can not find: %v", err)
-		return
-	}
-	log.Printf("需要访问的服务地址信息: %s", srvaddr)
-	log.Printf("服务发现结束！")
+	/*
+		//log.Printf("nihao")
+		flag.Parse()
+		log.Printf("开始服务发现：")
+		// 开始发现服务
+		disc, err := discovery.NewEtcdDiscovery()
+		if err != nil {
+			log.Fatalf("did not connect etcd: %v", err)
+		}
+		srvaddr, err := disc.GetAddrFromServiceId(srvId)
+		if err != nil {
+			log.Fatalf("Service can not find: %v", err)
+			return
+		}
+		log.Printf("需要访问的服务地址信息: %s", srvaddr)
+		log.Printf("服务发现结束！")
+	*/
 	// 输出服务信息
-
+	// 注册自定义ETCD解析器
+	etcdResolverBuilder := discovery.NewEtcdResolverBuilder()
+	// resolver定义了 gRPC 中名称解析的 API
+	// Register 将解析器构建器注册到解析器映射。
+	resolver.Register(etcdResolverBuilder)
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(srvaddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	//conn, err := grpc.Dial(srvaddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial("add:///", grpc.WithBalancerName(roundrobin.Name), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -56,6 +64,7 @@ func main() {
 		SecondNumber:  2,
 		ServiceNumber: 0,
 	})
+
 	log.Printf("调用服务的参数为%v,%v", 3, 2)
 	log.Printf("发起rpc服务调用：")
 	r, err := c.ServiceMethod(ctx, &request)
